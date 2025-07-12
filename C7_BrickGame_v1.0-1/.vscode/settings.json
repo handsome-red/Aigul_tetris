@@ -1,0 +1,19 @@
+{
+    "files.associations": {
+        "queue": "c",
+        "stack": "c",
+        "random": "c",
+        "locale": "c"
+    },
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "roslyncl",
+            "database": "university",
+            "username": "roslyncl"
+        }
+    ]
+}
