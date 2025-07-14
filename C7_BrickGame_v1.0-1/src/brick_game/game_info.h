@@ -14,6 +14,13 @@ typedef struct {
   int speed;
   int pause;
 } GameInfo_t;
+
+typedef struct {
+  int start_x;
+  int start_y;   // координаты фигуры
+  int** figure;  // сделать динамику
+} Block_t;
+
 // // void userInput(UserAction_t action, bool hold);
 // GameInfo_t updateCurrentState(GameInfo_t *gameInfo);
 #endif

@@ -8,6 +8,7 @@
 #define BOARD_M 10  // board width
 #define FIGURE_SIZE 4
 #define HUD_WIDTH 8
+
 // function
 int **choosing_figure(int **next);
 int can_shift_right(int *start_x, int **figure);
@@ -34,4 +35,6 @@ void shift_down(int *start_y, int *start_x, int **figure, GameInfo_t *gameInfo);
 void fall_figure(int *start_y, int *start_x, int **figure,
                  GameInfo_t *gameInfo);
 void connect(int *start_y, int *start_x, int **figure, GameInfo_t *gameInfo);
+void attach_figure_in_field(GameInfo_t *gameInfo, Block_t block);
+void detach_figure_in_field(GameInfo_t *gameInfo);
 #endif

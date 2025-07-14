@@ -16,7 +16,7 @@ UserAction_t get_signal() {
     rc = Right;
   else if (user_input == 'q')
     rc = Terminate;
-  else if (user_input == '\n')
+  else if (user_input == 's')
     rc = Start;
   else if (user_input == ' ')
     rc = Action;
@@ -25,78 +25,88 @@ UserAction_t get_signal() {
   return rc;
 }
 
-void sigact(GameInfo_t *gameInfo) {
-  static GameState state = START;
-  Block_t block = updateCurrentBlock();
+GameState sigact(GameInfo_t *gameInfo, GameState state,
+                 Block_t *block) {  // FSM machine
+  // state = update_state_machine(NO_STATE);
+  // Block_t block = updateCurrentBlock(); // Поменялся
 
   switch (state) {
     case START:
-      // on_start_state(sig, &state, gameInfo);
+
+      // prepare_figure_next();
+      // state = SPAWN;
+      // on_start_state(gameInfo, &state);
+      on_start_state(gameInfo);
+      // state = update_state_machine(SPAWN);
+      state = SPAWN;
       break;
     case SPAWN:
-      // on_spawn_state(start_y, start_x, figure, gameInfo, &state);
+      on_spawn_state(&block->start_y, &block->start_x, block->figure, gameInfo,
+                     &state);
       break;
     case SHIFTING:
-      // on_shifting_state(start_y, start_x, figure, gameInfo, &state);
+      on_shifting_state(&block->start_y, &block->start_x, block->figure,
+                        gameInfo, &state);
       break;
     case MOVING:
-      // on_moving_state(start_y, start_x, figure, gameInfo, sig, &state);
+      // on_moving_state(block.start_y, block.start_x, block.figure, gameInfo,
+      // sig,
+      //                 &state);
       break;
     case CONNECT:
-      // on_connect_state(start_y, start_x, figure, gameInfo, &state);
+      on_connect_state(&block->start_y, &block->start_x, block->figure,
+                       gameInfo, &state);
       break;
     case GAME_OVER:
       // on_game_over_state(sig, &state);
       break;
-    case PAUSE:
-      // on_pause_state(sig, &state, gameInfo);
-      break;
-    case EXIT:
-      on_exit_state(&state);
-      break;
+    // case PAUSE:
+    //   // on_pause_state(sig, &state, gameInfo);
+    //   break;
+    // case EXIT:
+    //   on_exit_state(&state);
+    //   break;
     default:
       break;
   }
+  return state;
 }
 
-void on_start_state(UserAction_t sig, GameInfo_t *gameInfo, GameState *state) {
-  print_start_banner();
-  // gameInfo->next = choosing_figure(gameInfo->next);
-  switch (sig) {
-    case Start:
-      *state = SPAWN;
-      break;
-    case Terminate:
-      *state = EXIT;
-      break;
-    default:
-      *state = START;
-      break;
-  }
+void on_start_state(GameInfo_t *gameInfo) {
+  UserAction_t sig = Start;
+  gameInfo->next = choosing_figure(gameInfo->next);
+  // switch (sig) {
+  //   case Start:
+  //     *state = SPAWN;
+  //     break;
+  //   default:
+  //     *state = START;
+  //     break;
+  // }
 }
 
-void on_spawn_state(int *start_y, int *start_x, int figure[4][4],
+void on_spawn_state(int *start_y, int *start_x, int **figure,
                     GameInfo_t *gameInfo, GameState *state) {
-  // *start_y = 0;
-  // *start_x = 4;
+  *start_y = 0;
+  *start_x = 4;
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 4; j++) {
       figure[i][j] = gameInfo->next[i][j];
     }
   gameInfo->next = choosing_figure(gameInfo->next);
-  *state = MOVING;
+  *state = SHIFTING;
 }
 
-void on_shifting_state(int *start_y, int *start_x, int figure[4][4],
+void on_shifting_state(int *start_y, int *start_x, int **figure,
                        GameInfo_t *gameInfo, GameState *state) {
-  usleep(100000);
   (*start_y) += 1;
-  if (!can_fall(start_y, start_x, figure, gameInfo))
-    *state = CONNECT;
-  else
-    *state = MOVING;
+
+  if (!can_fall(start_y, start_x, figure, gameInfo)) *state = CONNECT;
+  // else
+  //   *state = MOVING;
 }
-void on_moving_state(int *start_y, int *start_x, int figure[4][4],
+
+void on_moving_state(int *start_y, int *start_x, int **figure,
                      GameInfo_t *gameInfo, UserAction_t sig, GameState *state) {
   switch (sig) {
     case Up:
@@ -134,11 +144,15 @@ void on_moving_state(int *start_y, int *start_x, int figure[4][4],
 
 void userInput(UserAction_t action, bool hold) {
   GameInfo_t *gameInfo = get_game_info();  // 2 variant
-  Block_t block = updateCurrentBlock();    // 2 variant
+  Block_t *block = get_block();            // 2 variant
+  // GameState state = update_state_machine(NO_STATE);
 
   switch (action) {
-    // case Start:
-    //   break;
+    case Start:
+      update_state_machine(SPAWN);
+      // Подготовить фигуру next
+      // Перейти в состояние SPAWN при нажатии enter
+      break;
     case Pause:
       gameInfo->pause = !gameInfo->pause;
       break;
@@ -146,31 +160,33 @@ void userInput(UserAction_t action, bool hold) {
       // safe_record(gameInfo->score);
       free_matrix(BOARD_N, gameInfo->field);
       free_matrix(FIGURE_SIZE, gameInfo->next);
-      free_matrix(FIGURE_SIZE, block.figure);
+      free_matrix(FIGURE_SIZE, block->figure);  // возможно утечка
       endwin();
       exit(0);
       break;
     case Left:
-      shift_left(&block.start_x, block.figure);
+      gameInfo->score = block->start_x;
+      shift_left(&block->start_x, block->figure);
       break;
     case Right:
-      shift_right(&block.start_x, block.figure);
+      shift_right(&block->start_x, block->figure);
       break;
-    case Up:
-      turn_figure(&block.start_y, &block.start_x, block.figure, &gameInfo);
-      break;
-    case Down:
-      shift_down(&block.start_y, &block.start_x, block.figure, &gameInfo);
-      break;
-    case Action:
-      fall_figure(&block.start_y, &block.start_x, block.figure, &gameInfo);
-      break;
-    default:
-      break;
+      // case Up:
+      //   turn_figure(&block->start_y, &block->start_x, block->figure,
+      //   gameInfo); break;
+      // case Down:
+      //   shift_down(&block->start_y, &block->start_x, block->figure,
+      //   gameInfo); break;
+      // case Action:
+      //   fall_figure(&block->start_y, &block->start_x, block->figure,
+      //   gameInfo); break;
+      // default:
+      //   break;
   }
 }
+// 1 START - enter = запускать игру
 
-void on_connect_state(int *start_y, int *start_x, int figure[4][4],
+void on_connect_state(int *start_y, int *start_x, int **figure,
                       GameInfo_t *gameInfo, GameState *state) {
   connect(start_y, start_x, figure, gameInfo);
   processing_full_lines(gameInfo);
@@ -216,15 +232,15 @@ void on_pause_state(UserAction_t sig, GameState *state, GameInfo_t *gameInfo) {
 
 GameInfo_t updateCurrentState() {
   GameInfo_t gameInfo = *get_game_info();
-  // GameInfo_t gameInfo = {0};
   return gameInfo;
 }
 
 GameInfo_t *get_game_info() {
   static GameInfo_t *gameInfo = NULL;
+  Block_t *block = get_block();
 
   static int signal = 0;
-  GameState state = START;
+  static GameState state = START;
 
   if (NULL == gameInfo) {
     gameInfo = calloc(1, sizeof(GameInfo_t));
@@ -232,25 +248,40 @@ GameInfo_t *get_game_info() {
     gameInfo->next = create_matrix(FIGURE_SIZE, FIGURE_SIZE);
     gameInfo->speed = 100;
   } else if (timer(gameInfo->level, gameInfo->pause)) {
-    detach_figure_in_field(&gameInfo);
-    sigact(gameInfo);
-    attach_figure_in_field(&gameInfo);
+    detach_figure_in_field(gameInfo);
+    state = sigact(gameInfo, state, block);
+    attach_figure_in_field(gameInfo, *block);
   }
 
   return gameInfo;
 }
 
 Block_t updateCurrentBlock() {
-  static Block_t block = {0};
-  static bool flag = false;
+  Block_t block = *get_block();
+  return block;
+}
 
-  if (flag == false) {
-    block.figure = create_matrix(FIGURE_SIZE, FIGURE_SIZE);
-    block.start_x = 4;
-    flag = true;
+Block_t *get_block() {
+  static Block_t *block = NULL;
+
+  if (NULL == block) {
+    block = calloc(1, sizeof(GameInfo_t));
+    block->figure = create_matrix(FIGURE_SIZE, FIGURE_SIZE);
+    block->start_x = 4;
   }
 
   return block;
+}
+
+// block.c (или в том же файле, где updateCurrentBlock)
+
+// передали spawn получили spawn
+GameState update_state_machine(GameState state) {
+  static GameState new_state = START;
+  if (state != NO_STATE) {
+    new_state = state;
+  }
+  return new_state;
 }
 
 // if (gameInfo->score > gameInfo->high_score) {

@@ -17,7 +17,8 @@ int main() {
 
 void game_loop() {
   bool break_flag = TRUE;
-  GameState state = START;
+  GameState state = NO_STATE;
+
   // int start_y = 0;
   // int start_x = 4;
   // int figure[4][4] = {0};
@@ -28,11 +29,29 @@ void game_loop() {
   // gameInfo = updateCurrentState();
   // gameInfo.next = choosing_figure(gameInfo.next);  // ----
   while (break_flag) {
+    state = update_state_machine(state);
     // if (state == GAME_OVER || state == EXIT) break_flag = FALSE;
     // get_signal(signal);
     userInput(get_signal(), 1);
     gameInfo = updateCurrentState();
+
+    // if (state == START) {
+    //   gameInfo.level++;
+    //   print_start_banner();
+    // } else if (state == SPAWN) {
+    //   gameInfo.score++;
+    //   clear();
+    //   print_rectangle(0, BOARD_N + 1, 0, BOARD_M + HUD_WIDTH + 3);
+    //   mvprintw(9, 6, "SPAWN STATE");
+    // }
+
+    // clear();
+    // print_rectangle(0, BOARD_N + 1, 0, BOARD_M + HUD_WIDTH + 3);
+    // mvprintw(9, 6, "SPAWN STATE");
+    // } else {
     refreshing_the_rendering(gameInfo);
+    // }
+    // on_start_state(&gameInfo, );
     // sigact(&start_y, &start_x, figure, get_signal(signal), &state,
     // &gameInfo);
 

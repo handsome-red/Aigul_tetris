@@ -38,7 +38,7 @@ void print_rectangle(int top_y, int bottom_y, int left_x, int right_x) {
 void print_game_board(int **field) {
   for (int i = 0; i < BOARD_N; i++) {
     for (int j = 0; j < BOARD_M; j++) {
-      if (field[i][j] == 1) {
+      if (field[i][j] >= 1) {
         // mvaddch(i + 1, j + 1, BLOCK);  // Айгуль
         mvaddch(i + 1, j * 2, BLOCK);      // Андрей
         mvaddch(i + 1, j * 2 + 1, BLOCK);  // Андрей
@@ -51,23 +51,23 @@ void print_game_board(int **field) {
 void print_next_figure(int **next) {
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 4; j++) {
-      if (next[i][j] == 1) {
-        mvaddch(i + 14, BOARD_M + 5 + j * 2, BLOCK);
-        mvaddch(i + 14, BOARD_M + 5 + j * 2 + 1, BLOCK);
+      if (next[i][j] >= 1) {
+        mvaddch(i + 14, BOARD_M + 15 + j * 2, BLOCK);
+        mvaddch(i + 14, BOARD_M + 15 + j * 2 + 1, BLOCK);
       }
     }
 }
 
-// DONE
-void print_figure(int *start_y, int *start_x, int figure[4][4]) {
-  for (int i = 0; i < 4; i++)
-    for (int j = 0; j < 4; j++) {
-      if (figure[i][j] == 1) {
-        mvaddch(*start_y + i, (*start_x + j) * 2, BLOCK);
-        mvaddch(*start_y + i, (*start_x + j) * 2 + 1, BLOCK);
-      }
-    }
-}
+// // DONE
+// void print_figure(int *start_y, int *start_x, int figure[4][4]) {
+//   for (int i = 0; i < 4; i++)
+//     for (int j = 0; j < 4; j++) {
+//       if (figure[i][j] >= 1) {
+//         mvaddch(*start_y + i, (*start_x + j) * 2, BLOCK);
+//         mvaddch(*start_y + i, (*start_x + j) * 2 + 1, BLOCK);
+//       }
+//     }
+// }
 
 // void refreshing_the_rendering(int *start_y, int *start_x, int figure[4][4],
 //                               GameInfo_t *gameInfo) {
@@ -88,7 +88,7 @@ void refreshing_the_rendering(GameInfo_t gameInfo) {
   print_hud(gameInfo);
   attron(COLOR_PAIR(1));
   print_game_board(gameInfo.field);
-  // print_next_figure(gameInfo.next);
+  print_next_figure(gameInfo.next);
   attroff(COLOR_PAIR(1));
   refresh();
 }
@@ -114,6 +114,7 @@ void print_start_banner() {
   mvprintw(9, 6, "Press Enter");
   mvprintw(11, 2, "to start the game!");
 }
+
 void print_game_over_banner() {
   clear();
   print_rectangle(0, BOARD_N + 1, 0, BOARD_M + HUD_WIDTH + 3);

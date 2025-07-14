@@ -161,8 +161,8 @@ bool timer(int level, bool pause) {
   double tick_check = (now.tv_sec - current_time.tv_sec) * 1000 +
                       (now.tv_nsec - current_time.tv_nsec) / 1000000;
 
-  if (tick <= tick_check && pause == 0) {
-    result = false;
+  if (tick <= tick_check && pause == false) {
+    result = true;
     current_time = now;
   }
   return result;
@@ -198,25 +198,14 @@ void free_matrix(int n, int ***matrix) {
   }
 }
 
-void safe_record(int score) {
-  FILE *file = fopen("../../best_score.txt", "rw+");
-  int record = 0;
-  fscanf(file, "%d", &record);
-  if (record < score) {
-    rewind(file);
-    fprintf(file, "%d", score);
-  }
-  fclose(file);
-}
-
-void attach_figure_in_field(GameInfo_t *gameInfo) {
-  Block_t block = updateCurrentBlock();
+void attach_figure_in_field(GameInfo_t *gameInfo, Block_t block) {
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       if (block.figure[i][j] == 1) {
         int new_y = block.start_y + i;
         int new_x = block.start_x + j;
-        if (new_y >= 0 && new_y < BOARD_N && new_x >= 0 && new_x < BOARD_M) {
+        if ((new_y >= 0 && new_y < BOARD_N && new_x >= 0 && new_x < BOARD_M) &&
+            gameInfo->field[new_y][new_x] != 1) {
           gameInfo->field[new_y][new_x] = 2;
         }
       }
